@@ -29,6 +29,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float maxJetSpeedHorizontal;
     [SerializeField] private ParticleSystem[] jetPackParticles;
     private float[] jetpackParticlesAngleOffsets;
+    [SerializeField] private string thrusterSound;
 
     [Header("Fuel Consumption")]
     [SerializeField] private float consumptionRate;
@@ -51,21 +52,20 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         horizontalAxis = Input.GetAxis("Horizontal");
-        jetting = Input.GetKey(jetKey);
+        jetting = Input.GetKey(jetKey) && fuel > 0;
 
         sprites.rotation = Quaternion.Euler(sprites.rotation.x, sprites.rotation.y, Mathf.Rad2Deg * angle);
         fuelBar.value = fuel;
 
-        if(Input.GetKeyDown(jetKey)) {
+        if(Input.GetKeyDown(jetKey) && fuel > 0) {
             foreach(ParticleSystem particles in jetPackParticles) {
                 particles.Play();
             }
+            AudioManager.Instance.Play(thrusterSound);
         }
 
         else if (Input.GetKeyUp(jetKey)) {
-            foreach(ParticleSystem particles in jetPackParticles) {
-                particles.Stop();
-            }
+            stopEffects();
         }
 
         if(jetting) {
@@ -81,10 +81,13 @@ public class PlayerController : MonoBehaviour
         float xAccel = 0f;
         float yAccel = 0f;
         
-        if(jetting && fuel > 0) {
+        if(jetting) {
             yAccel += (maxJetSpeedVertical - rb.velocity.y) * jetpackAccelMultiplier * Mathf.Sin(angle + Mathf.PI * 0.5f);
             xAccel += (maxJetSpeedHorizontal - rb.velocity.x) * jetpackAccelMultiplier * Mathf.Cos(angle + Mathf.PI * 0.5f);
             fuel -= consumptionRate * Time.fixedDeltaTime;
+            if(fuel <= 0) {
+                stopEffects();
+            }
         }
 
         if(grounded) {
@@ -113,5 +116,12 @@ public class PlayerController : MonoBehaviour
             fuel = Mathf.Clamp(fuel, 0f, maxFuel);
             capsule.Consume();
         }
+    }
+
+    private void stopEffects() {
+        foreach(ParticleSystem particles in jetPackParticles) {
+            particles.Stop();
+        }
+        AudioManager.Instance.Stop(thrusterSound);
     }
 }

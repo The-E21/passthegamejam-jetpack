@@ -10,10 +10,13 @@ public class GrappleController : MonoBehaviour
 
     [SerializeField] private GameObject grappleObject;
     private GameObject grapple;
+    [SerializeField] private GameObject ropeObject;
+    private GameObject ropeActiveObject;
 
     private Vector2 direction;
     [SerializeField] private float bulletSpeed;
     [SerializeField] private float spawnRadius;
+    [SerializeField] private string shootSound;
 
     [SerializeField] private float ropeLength;
 
@@ -42,10 +45,18 @@ public class GrappleController : MonoBehaviour
             rope.autoConfigureDistance = false;
             rope.distance = ropeLength;
             rope.connectedBody = rb;
+            AudioManager.Instance.Play(shootSound);
+            ropeActiveObject = Instantiate(ropeObject);
+            RopeRenderer rr = ropeActiveObject.GetComponent<RopeRenderer>();
+            rr.startObject = transform;
+            rr.endObject = grapple.transform;
+            rr.ropeLength = ropeLength;
         }
         else {
             Destroy(grapple);
             grapple = null;
+            Destroy(ropeActiveObject);
+            ropeActiveObject = null;
         }
     }
 }
