@@ -7,6 +7,7 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D rb;
 
     [SerializeField] private Transform sprites;
+    [SerializeField] private float maxVelocity;
 
     [Header("Ground/Wall check")]
     [SerializeField] private Transform[] feet;
@@ -15,7 +16,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Horizontal Movement")]
     private float horizontalAxis;
-    [SerializeField] private float maxSpeed;
+    [SerializeField] private float maxGroundSpeed;
     [SerializeField] private float groundedAccelMultiplier;
 
     [Header("Jetpack movement")]
@@ -24,7 +25,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float rotateRate;
     [SerializeField] private KeyCode jetKey;
     [SerializeField] private float jetpackAccelMultiplier;
-    [SerializeField] private float maxJetSpeed;
+    [SerializeField] private float maxJetSpeedVertical;
+    [SerializeField] private float maxJetSpeedHorizontal;
 
     [Header("Fuel Consumption")]
     [SerializeField] private float consumptionRate;
@@ -55,18 +57,19 @@ public class PlayerController : MonoBehaviour
         float yAccel = 0f;
         
         if(jetting && fuel > 0) {
-            yAccel += (maxJetSpeed - rb.velocity.y) * jetpackAccelMultiplier * Mathf.Sin(angle + Mathf.PI * 0.5f);
-            xAccel += (maxJetSpeed - rb.velocity.x) * jetpackAccelMultiplier * Mathf.Cos(angle + Mathf.PI * 0.5f);
+            yAccel += (maxJetSpeedVertical - rb.velocity.y) * jetpackAccelMultiplier * Mathf.Sin(angle + Mathf.PI * 0.5f);
+            xAccel += (maxJetSpeedHorizontal - rb.velocity.x) * jetpackAccelMultiplier * Mathf.Cos(angle + Mathf.PI * 0.5f);
             fuel -= consumptionRate * Time.fixedDeltaTime;
         }
 
         if(grounded) {
-            xAccel += (horizontalAxis * maxSpeed - rb.velocity.x) * groundedAccelMultiplier;
+            xAccel += (horizontalAxis * maxGroundSpeed - rb.velocity.x) * groundedAccelMultiplier;
             angle = 0;
         } else {
             angle -= rotateRate * horizontalAxis * Time.fixedDeltaTime;
         }
         rb.AddForce(new Vector2(xAccel, yAccel));
+        rb.velocity = Vector2.ClampMagnitude(rb.velocity, maxVelocity);
         fuel = Mathf.Clamp(fuel, 0f, maxFuel);
     }
 
@@ -77,5 +80,13 @@ public class PlayerController : MonoBehaviour
         } 
 
         return false;
+    }
+
+    private void OnTriggerEnter2D(Collider2D other) {
+        if(other.TryGetComponent<FuelCapsule>(out FuelCapsule capsule)) {
+            fuel += capsule.amount;
+            fuel = Mathf.Clamp(fuel, 0f, maxFuel);
+            capsule.Consume();
+        }
     }
 }

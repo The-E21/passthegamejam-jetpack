@@ -6,6 +6,7 @@ public class CameraScript : MonoBehaviour
     private Vector3 velocity;
     private float zPos;
     [SerializeField] private float smoothTime;
+    [SerializeField] private Vector2 offset;
 
     private void Start() {
         player = GameObject.FindGameObjectWithTag("Player").transform;
@@ -14,7 +15,7 @@ public class CameraScript : MonoBehaviour
     }
 
     private void LateUpdate() {
-        Vector3 targetPos = new Vector3(player.position.x, player.position.y, zPos);
+        Vector3 targetPos = new Vector3(player.position.x + offset.x, player.position.y + offset.y, zPos);
         transform.position = Vector3.SmoothDamp(transform.position, targetPos, ref velocity, smoothTime);
     }
 }
