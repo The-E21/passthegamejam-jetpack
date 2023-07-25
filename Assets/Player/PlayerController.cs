@@ -27,6 +27,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float jetpackAccelMultiplier;
     [SerializeField] private float maxJetSpeedVertical;
     [SerializeField] private float maxJetSpeedHorizontal;
+    [SerializeField] private ParticleSystem[] jetPackParticles;
+    private float[] jetpackParticlesAngleOffsets;
 
     [Header("Fuel Consumption")]
     [SerializeField] private float consumptionRate;
@@ -39,7 +41,11 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         fuel = maxFuel;
         fuelBar.maxValue = maxFuel;
-        fuelBar.value = fuel;    
+        fuelBar.value = fuel;  
+        jetpackParticlesAngleOffsets = new float[jetPackParticles.Length];
+        for(int i = 0; i < jetPackParticles.Length; i ++) {
+            jetpackParticlesAngleOffsets[i] = jetPackParticles[i].shape.rotation.z;
+        }
     }
 
     void Update()
@@ -49,6 +55,25 @@ public class PlayerController : MonoBehaviour
 
         sprites.rotation = Quaternion.Euler(sprites.rotation.x, sprites.rotation.y, Mathf.Rad2Deg * angle);
         fuelBar.value = fuel;
+
+        if(Input.GetKeyDown(jetKey)) {
+            foreach(ParticleSystem particles in jetPackParticles) {
+                particles.Play();
+            }
+        }
+
+        else if (Input.GetKeyUp(jetKey)) {
+            foreach(ParticleSystem particles in jetPackParticles) {
+                particles.Stop();
+            }
+        }
+
+        if(jetting) {
+            for(int i = 0; i < jetPackParticles.Length; i ++) {
+                var shape = jetPackParticles[i].shape;
+                shape.rotation = new Vector3(shape.rotation.x, shape.rotation.y, angle * Mathf.Rad2Deg + jetpackParticlesAngleOffsets[i]);
+            }
+        }
     }
 
     private void FixedUpdate() {

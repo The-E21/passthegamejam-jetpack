@@ -1,7 +1,10 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))]
 public class GrappleController : MonoBehaviour
 {
+    private Rigidbody2D rb;
+
     [SerializeField] private Transform grappleGun;
     [SerializeField] private float gunRadius;
 
@@ -12,8 +15,11 @@ public class GrappleController : MonoBehaviour
     [SerializeField] private float bulletSpeed;
     [SerializeField] private float spawnRadius;
 
+    [SerializeField] private float ropeLength;
+
     private void Start() {
-        grapple = null;    
+        grapple = null;
+        rb = GetComponent<Rigidbody2D>();    
     }
 
     private void Update() {
@@ -31,6 +37,11 @@ public class GrappleController : MonoBehaviour
             grapple = Instantiate(grappleObject);
             grapple.transform.position = (Vector2)transform.position + direction * spawnRadius;
             grapple.GetComponent<Rigidbody2D>().velocity = direction * bulletSpeed;
+            DistanceJoint2D rope = grapple.AddComponent<DistanceJoint2D>();
+            rope.maxDistanceOnly = true;
+            rope.autoConfigureDistance = false;
+            rope.distance = ropeLength;
+            rope.connectedBody = rb;
         }
         else {
             Destroy(grapple);
